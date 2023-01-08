@@ -1,9 +1,3 @@
-#
-#   Hello World server in Python
-#   Binds REP socket to tcp://*:5555
-#   Expects b"Hello" from client, replies with b"World"
-#
-from logging import raiseExceptions
 import sys
 import zmq
 import threading
@@ -14,30 +8,48 @@ buforOfMessages = queue.Queue()
 lock = threading.Lock()
 context = zmq.Context()
 socket = context.socket(zmq.ROUTER)
-socket.bind("tcp://*:5555")
+socket.bind("tcp://192.168.1.239:50000")
 
-context2 = zmq.Context()
 socket2 = context.socket(zmq.ROUTER)
-socket2.bind("tcp://*:5556")
+#socket2.bind("tcp://127.0.0.1:50001") <- for running in localhost
+socket2.bind("tcp://192.168.1.239:50001")
 
+users = []
+users_dictionary = {}
+pubKeys = []
+pubKeys_dictionary = {}
+
+print("Hello on server of CrypText Beta 0.1.0 v, server will run forever, until die")
+
+while True:
+    #frist recv add person
+    person = socket2.recv().decode('utf-8')
+    message = socket2.recv().decode('utf-8')
+    #second loop recive public key from this user
+    person = socket2.recv().decode('utf-8')
+    public_key = socket2.recv().decode('utf-8')
+    users.append(person)
+    pubKeys.append(public_key)
+    if len(users) > 1:
+        #send to user 0 name of user1
+        socket2.send_multipart([bytes(users[0], 'utf-8'),bytes(users[1], 'utf-8')])
+        #send to user 1 name of user0 
+        socket2.send_multipart([bytes(users[1], 'utf-8'),bytes(users[0], 'utf-8')])
+        #send to user0 public key of user1
+        socket2.send_multipart([bytes(users[0], 'utf-8'),bytes(pubKeys[1], 'utf-8')])
+        #send to user1 public key of user0
+        socket2.send_multipart([bytes(users[1], 'utf-8'),bytes(pubKeys[0], 'utf-8')])
+        socket2.close()
+        break
+
+users_dictionary = {bytes(users[0], 'utf-8'): bytes(users[1], 'utf-8'), bytes(users[1], 'utf-8'): bytes(users[0], 'utf-8')}
 
 def reciveMessage():
     while True:
         global socket, lock, buforOfMessages
         person = socket.recv()
         message = socket.recv()
-        print("Recived message from 1")
-        lock.acquire()
-        buforOfMessages.put(person)
-        buforOfMessages.put(message)
-        lock.release()
-
-def reciveMessage2():
-    while True:
-        global socket, lock, buforOfMessages
-        person = socket2.recv()
-        message = socket2.recv()
-        print("Recived message from 2")
+        print("Recived message")
         lock.acquire()
         buforOfMessages.put(person)
         buforOfMessages.put(message)
@@ -47,35 +59,23 @@ def sendMessage():
     time.sleep(2)
     print("Started sending message!")
     while True:
-        global socket,socket2, lock, buforOfMessages
+        global socket, lock, buforOfMessages, users_dictionary
         if (buforOfMessages.empty() == False):
             lock.acquire()
             userToSend = buforOfMessages.get() 
             messageToSend = buforOfMessages.get()
             print(messageToSend, userToSend)
             lock.release()
-        #due to python 3.9 version i cant use match statment so i will go with if elif 
-            print("Send message to %s" %userToSend)
-            user1 = 'delta'.encode('utf-8')
-            user2 = 'kappa'.encode('utf-8')
-            if (userToSend == bytes(user1)):
-                print("send to %s", userToSend)
-                socket.send(messageToSend)
-            elif (userToSend == bytes(user2)):
-                socket2.send(messageToSend)
-        #time.sleep(1)
+            socket.send_multipart([users_dictionary[userToSend], messageToSend])
+
 
 rcvMSG = threading.Thread(target=reciveMessage)
-rcvMSG2 = threading.Thread(target=reciveMessage2)
 sndMSG = threading.Thread(target=sendMessage)
-
-print("Hello on server of CrypText pre-alpha 0.0.1 v, server will run forever, until die")
 rcvMSG.start()
-rcvMSG2.start()
 sndMSG.start()
 
-print("type KILL to end server:")
-print("\n")
-temp = input()
-if (temp == "KILL"):
-    sys.exit(0)
+#print("type KILL to end server:")
+#print("\n")
+#temp = input()
+#if (temp == "KILL"):
+#    sys.exit(0)
