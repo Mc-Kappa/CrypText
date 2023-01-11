@@ -3,16 +3,17 @@ import zmq
 import threading
 import time
 import queue
+import base64
 
 buforOfMessages = queue.Queue()
 lock = threading.Lock()
 context = zmq.Context()
 socket = context.socket(zmq.ROUTER)
-socket.bind("tcp://192.168.1.239:50000")
+socket.bind("tcp://127.0.0.1:50000")
 
 socket2 = context.socket(zmq.ROUTER)
 #socket2.bind("tcp://127.0.0.1:50001") <- for running in localhost
-socket2.bind("tcp://192.168.1.239:50001")
+socket2.bind("tcp://127.0.0.1:50001")
 
 users = []
 users_dictionary = {}
@@ -64,7 +65,8 @@ def sendMessage():
             lock.acquire()
             userToSend = buforOfMessages.get() 
             messageToSend = buforOfMessages.get()
-            print(messageToSend, userToSend)
+            encodedMessage = base64.b64encode(messageToSend)
+            print(encodedMessage, userToSend)
             lock.release()
             socket.send_multipart([users_dictionary[userToSend], messageToSend])
 

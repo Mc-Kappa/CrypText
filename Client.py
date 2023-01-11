@@ -107,7 +107,7 @@ def getSecureConnection(name, pubKey):
     socket = context.socket(zmq.DEALER)
     port = 50001
     socket.setsockopt_string(zmq.IDENTITY, f"{name}")#_CONNECTION
-    socket.connect("tcp://192.168.1.239:%s" %port)
+    socket.connect("tcp://127.0.0.1:%s" %port)
     socket.send_string("Hello!")
     socket.send(pubKey)
     secondUserName = ""
@@ -179,7 +179,7 @@ main_buffor = Queue()
 def main():
     socket.setsockopt(zmq.IDENTITY, uniqe_id)
     #socket.connect("tcp://localhost:%s" %port)
-    socket.connect("tcp://192.168.1.239:%s" %port)
+    socket.connect("tcp://127.0.0.1:%s" %port)
     rcvMSG = threading.Thread(target=reciveMessage)
     upMSG = threading.Thread(target=updateMessage)
     upMSG.start()
