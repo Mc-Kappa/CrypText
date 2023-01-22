@@ -137,6 +137,8 @@ def genKeys():
     #app will randomly take one of those keys and load as private key
     random_key = random.randint(0,99)
     key = open(f"private_keys/{random_key}.pem", "rb")
+    #comment two lines upper and uncomment line below to use only one private key
+    #key = open(f"private_keys.pem", "rb")
     private_key = RSA.import_key(key.read())
     public_key = private_key.publickey()
     return private_key, public_key
