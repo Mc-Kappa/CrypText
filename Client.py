@@ -44,7 +44,7 @@ class Window(QWidget):
     def widgets(self):
         pushButton = QPushButton("Send message",self)
         pushButton.clicked.connect(self.addMessageToList)
-        pushButton.setGeometry(1090, 560, 171, 91)
+        pushButton.setGeometry(1080, 560, 171, 101)
         
         self.lineEdit = QTextEdit(self)
         self.lineEdit.setGeometry(70, 560, 991, 101)
